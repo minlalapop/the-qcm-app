@@ -1,0 +1,241 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    container_name: iktibar-frontend
+    environment:
+      VITE_AUTH_SERVICE_URL: http://localhost:8001
+      VITE_USER_SERVICE_URL: http://localhost:8002
+      VITE_DOCUMENT_SERVICE_URL: http://localhost:8003
+      VITE_KNOWLEDGE_SERVICE_URL: http://localhost:8004
+      VITE_AI_SERVICE_URL: http://localhost:8005
+      VITE_GENERATION_SERVICE_URL: http://localhost:8006
+      VITE_EVALUATION_SERVICE_URL: http://localhost:8007
+      VITE_LEARNING_SERVICE_URL: http://localhost:8008
+      VITE_EXPORT_SERVICE_URL: http://localhost:8009
+    ports:
+      - "5173:5173"
+    depends_on:
+      auth-service:
+        condition: service_started
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: qcm-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-qcm_app}
+      POSTGRES_USER: ${POSTGRES_USER:-qcm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qcm_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qcm_user -d qcm_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+    container_name: qcm-auth-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${AUTH_DB_SCHEMA:-auth}
+      JWT_SECRET_KEY: ${AUTH_JWT_SECRET_KEY:-dev-only-auth-jwt-secret-change-me}
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      ENABLE_DEFAULT_ADMIN: ${AUTH_ENABLE_DEFAULT_ADMIN:-true}
+      DEFAULT_ADMIN_EMAIL: ${AUTH_DEFAULT_ADMIN_EMAIL:-admin@example.com}
+      DEFAULT_ADMIN_PASSWORD: ${AUTH_DEFAULT_ADMIN_PASSWORD:-admin1234}
+      DEFAULT_ADMIN_FULL_NAME: ${AUTH_DEFAULT_ADMIN_FULL_NAME:-Admin Iktibar}
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/auth-service/app:/app/app
+
+  user-service:
+    build:
+      context: ./services/user-service
+    container_name: qcm-user-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${USER_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${USER_DB_SCHEMA:-users}
+      JWT_SECRET_KEY: ${USER_JWT_SECRET_KEY:-dev-only-user-jwt-secret-change-me}
+    ports:
+      - "8002:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/user-service/app:/app/app
+
+  document-service:
+    build:
+      context: ./services/document-service
+    container_name: qcm-document-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${DOCUMENT_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${DOCUMENT_DB_SCHEMA:-documents}
+      JWT_SECRET_KEY: ${DOCUMENT_JWT_SECRET_KEY:-dev-only-document-jwt-secret-change-me}
+      STORAGE_ROOT: ${DOCUMENT_STORAGE_ROOT:-/app/storage}
+      CHUNK_MAX_CHARS: 1200
+      CHUNK_OVERLAP_CHARS: 180
+    ports:
+      - "8003:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/document-service/app:/app/app
+      - ./storage:/app/storage
+
+  knowledge-service:
+    build:
+      context: ./services/knowledge-service
+    container_name: qcm-knowledge-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${KNOWLEDGE_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${KNOWLEDGE_DB_SCHEMA:-knowledge}
+      JWT_SECRET_KEY: ${KNOWLEDGE_JWT_SECRET_KEY:-dev-only-knowledge-jwt-secret-change-me}
+      DOCUMENT_SERVICE_URL: ${KNOWLEDGE_DOCUMENT_SERVICE_URL:-http://document-service:8000}
+      VECTOR_STORE_ROOT: ${KNOWLEDGE_VECTOR_STORE_ROOT:-/app/vector_store}
+      EMBEDDING_MODEL_NAME: ${KNOWLEDGE_EMBEDDING_MODEL_NAME:-sentence-transformers/all-MiniLM-L6-v2}
+      EMBEDDING_DIMENSION: 384
+    ports:
+      - "8004:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      document-service:
+        condition: service_started
+    volumes:
+      - ./services/knowledge-service/app:/app/app
+      - ./vector_store:/app/vector_store
+
+  ai-service:
+    build:
+      context: ./services/ai-service
+    container_name: qcm-ai-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${AI_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${AI_DB_SCHEMA:-ai}
+      JWT_SECRET_KEY: ${AI_JWT_SECRET_KEY:-dev-only-ai-jwt-secret-change-me}
+      KNOWLEDGE_SERVICE_URL: ${AI_KNOWLEDGE_SERVICE_URL:-http://knowledge-service:8000}
+      DEFAULT_LLM_PROVIDER: openrouter
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENROUTER_APP_TITLE: ${OPENROUTER_APP_TITLE:-The QCM App}
+      OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-http://localhost:8005}
+    ports:
+      - "8005:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      knowledge-service:
+        condition: service_started
+    volumes:
+      - ./services/ai-service/app:/app/app
+
+  generation-service:
+    build:
+      context: ./services/generation-service
+    container_name: qcm-generation-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${GENERATION_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${GENERATION_DB_SCHEMA:-generation}
+      JWT_SECRET_KEY: ${GENERATION_JWT_SECRET_KEY:-dev-only-generation-jwt-secret-change-me}
+      AI_SERVICE_URL: ${GENERATION_AI_SERVICE_URL:-http://ai-service:8000}
+      LEARNING_SERVICE_URL: ${GENERATION_LEARNING_SERVICE_URL:-http://learning-service:8000}
+    ports:
+      - "8006:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    volumes:
+      - ./services/generation-service/app:/app/app
+
+  evaluation-service:
+    build:
+      context: ./services/evaluation-service
+    container_name: qcm-evaluation-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${EVALUATION_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${EVALUATION_DB_SCHEMA:-evaluation}
+      JWT_SECRET_KEY: ${EVALUATION_JWT_SECRET_KEY:-dev-only-evaluation-jwt-secret-change-me}
+    ports:
+      - "8007:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      generation-service:
+        condition: service_started
+    volumes:
+      - ./services/evaluation-service/app:/app/app
+
+  learning-service:
+    build:
+      context: ./services/learning-service
+    container_name: qcm-learning-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${LEARNING_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${LEARNING_DB_SCHEMA:-learning}
+      JWT_SECRET_KEY: ${LEARNING_JWT_SECRET_KEY:-dev-only-learning-jwt-secret-change-me}
+      EVALUATION_SERVICE_URL: ${LEARNING_EVALUATION_SERVICE_URL:-http://evaluation-service:8000}
+      VECTOR_STORE_ROOT: ${LEARNING_VECTOR_STORE_ROOT:-/app/vector_store}
+      EMBEDDING_MODEL_NAME: ${LEARNING_EMBEDDING_MODEL_NAME:-sentence-transformers/all-MiniLM-L6-v2}
+      EMBEDDING_DIMENSION: 384
+    ports:
+      - "8008:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      evaluation-service:
+        condition: service_started
+    volumes:
+      - ./services/learning-service/app:/app/app
+      - ./vector_store:/app/vector_store
+
+  export-service:
+    build:
+      context: ./services/export-service
+    container_name: qcm-export-service
+    environment:
+      APP_ENV: development
+      DATABASE_URL: ${EXPORT_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DB_SCHEMA: ${EXPORT_DB_SCHEMA:-export}
+      JWT_SECRET_KEY: ${EXPORT_JWT_SECRET_KEY:-dev-only-export-jwt-secret-change-me}
+      GENERATION_SERVICE_URL: ${EXPORT_GENERATION_SERVICE_URL:-http://generation-service:8000}
+      STORAGE_ROOT: ${EXPORT_STORAGE_ROOT:-/app/storage}
+      EXPORT_DIR_NAME: ${EXPORT_DIR_NAME:-exports}
+    ports:
+      - "8009:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      generation-service:
+        condition: service_started
+    volumes:
+      - ./services/export-service/app:/app/app
+      - ./storage:/app/storage
+
+volumes:
+  postgres_data:
+  frontend_node_modules:
