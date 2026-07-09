@@ -2,6 +2,8 @@
 
 Application QCM basee sur une architecture microservices Python/FastAPI.
 
+<img width="5715" height="2508" alt="mermaid-diagram-2026-07-09-185457" src="https://github.com/user-attachments/assets/4d57fc0a-93ad-438f-b9ba-f197d8617bbb" />
+
 Nom de l'application : **Iktibar** 
 
 ## Stockage
