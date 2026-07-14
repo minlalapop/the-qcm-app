@@ -557,16 +557,16 @@ function MindmapResult({ mindmap, onChange }: { mindmap: MindMap; onChange: (min
 function GeneratingPlayground() {
   const shapes = useMemo(
     () => [
-      { id: 1, x: 16, y: 28, size: 18, kind: "circle", color: "rgba(134,45,190,0.24)" },
-      { id: 2, x: 30, y: 68, size: 22, kind: "triangle", color: "rgba(36,163,255,0.24)" },
-      { id: 3, x: 44, y: 22, size: 16, kind: "square", color: "rgba(156,93,229,0.22)" },
-      { id: 4, x: 58, y: 60, size: 20, kind: "circle", color: "rgba(134,45,190,0.18)" },
-      { id: 5, x: 72, y: 34, size: 24, kind: "triangle", color: "rgba(36,163,255,0.2)" },
-      { id: 6, x: 84, y: 72, size: 17, kind: "square", color: "rgba(134,45,190,0.24)" },
-      { id: 7, x: 22, y: 78, size: 14, kind: "circle", color: "rgba(156,93,229,0.24)" },
-      { id: 8, x: 78, y: 18, size: 15, kind: "circle", color: "rgba(134,45,190,0.18)" },
-      { id: 9, x: 50, y: 78, size: 19, kind: "triangle", color: "rgba(134,45,190,0.18)" },
-      { id: 10, x: 62, y: 25, size: 14, kind: "square", color: "rgba(36,163,255,0.18)" },
+      { id: 1, x: 16, y: 28, size: 18, kind: "circle", color: "rgba(29,163,125,0.24)" },
+      { id: 2, x: 30, y: 68, size: 22, kind: "triangle", color: "rgba(13,70,102,0.24)" },
+      { id: 3, x: 44, y: 22, size: 16, kind: "square", color: "rgba(20,125,118,0.22)" },
+      { id: 4, x: 58, y: 60, size: 20, kind: "circle", color: "rgba(29,163,125,0.18)" },
+      { id: 5, x: 72, y: 34, size: 24, kind: "triangle", color: "rgba(13,70,102,0.2)" },
+      { id: 6, x: 84, y: 72, size: 17, kind: "square", color: "rgba(29,163,125,0.24)" },
+      { id: 7, x: 22, y: 78, size: 14, kind: "circle", color: "rgba(20,125,118,0.24)" },
+      { id: 8, x: 78, y: 18, size: 15, kind: "circle", color: "rgba(29,163,125,0.18)" },
+      { id: 9, x: 50, y: 78, size: 19, kind: "triangle", color: "rgba(29,163,125,0.18)" },
+      { id: 10, x: 62, y: 25, size: 14, kind: "square", color: "rgba(13,70,102,0.18)" },
     ],
     [],
   );
@@ -643,14 +643,14 @@ function GeneratingPlayground() {
         );
       })}
       <div
-        className="pointer-events-none absolute rounded-full shadow-[0_18px_45px_rgba(134,45,190,0.22)] transition-[width,height] duration-200"
+        className="pointer-events-none absolute rounded-full shadow-[0_18px_45px_rgba(29,163,125,0.22)] transition-[width,height] duration-200"
         style={{
           left: `${player.x}%`,
           top: `${player.y}%`,
           width: playerSize,
           height: playerSize,
           transform: "translate(-50%, -50%)",
-          background: "radial-gradient(circle at 34% 28%, rgba(255,255,255,0.9), rgba(156,93,229,0.92) 34%, #862dbe 100%)",
+          background: "radial-gradient(circle at 34% 28%, rgba(255,255,255,0.9), rgba(20,125,118,0.92) 34%, #1DA37D 100%)",
         }}
       />
     </div>

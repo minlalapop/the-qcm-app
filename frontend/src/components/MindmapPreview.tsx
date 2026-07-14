@@ -135,7 +135,7 @@ function MindmapBranch({ node, side }: { node: MindmapTreeNode; side: "left" | "
           {node.children.map((child, index) => (
             <div
               key={`${child.label}-${index}`}
-              className="max-w-[300px] rounded-xl bg-white/75 px-3 py-2 text-xs font-bold text-on-surface-variant shadow-[0_1px_0_rgba(134,45,190,0.12)]"
+              className="max-w-[300px] rounded-xl bg-white/75 px-3 py-2 text-xs font-bold text-on-surface-variant shadow-[0_1px_0_rgba(29,163,125,0.12)]"
             >
               {child.label}
               {child.children.length > 0 && (

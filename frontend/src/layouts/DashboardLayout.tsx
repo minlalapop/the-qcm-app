@@ -53,7 +53,7 @@ export function DashboardLayout() {
                 className={({ isActive }) =>
                   `flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-bold transition ${
                     isActive
-                      ? "bg-primary/10 text-primary shadow-[inset_4px_0_0_#862dbe]"
+                      ? "bg-primary/10 text-primary shadow-[inset_4px_0_0_#1DA37D]"
                       : "text-on-surface-variant hover:bg-white/60 hover:text-primary"
                   }`
                 }
