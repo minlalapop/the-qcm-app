@@ -1,5 +1,6 @@
 type RequestOptions = RequestInit & {
   token?: string | null;
+  timeoutMs?: number;
 };
 
 export class ApiError extends Error {
@@ -15,6 +16,7 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest<T>(baseUrl: string, path: string, options: RequestOptions = {}): Promise<T> {
+  const { timeoutMs, signal, ...requestOptions } = options;
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
 
@@ -26,10 +28,28 @@ export async function apiRequest<T>(baseUrl: string, path: string, options: Requ
     headers.set("Authorization", `Bearer ${options.token}`);
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...options,
-    headers,
-  });
+  const controller = timeoutMs ? new AbortController() : null;
+  const timeoutId = controller ? window.setTimeout(() => controller.abort(), timeoutMs) : null;
+  if (controller && signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      ...requestOptions,
+      headers,
+      signal: controller?.signal ?? signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new ApiError("API request timed out. Check that the backend service is reachable.", 0);
+    }
+    throw error;
+  } finally {
+    if (timeoutId) window.clearTimeout(timeoutId);
+  }
 
   if (response.status === 204) {
     return undefined as T;
