@@ -17,7 +17,6 @@ import { deleteDocument, getDocumentPageImageUrls, listDocuments, uploadDocument
 import { downloadExport, exportMindmap, exportQcm, exportSummary } from "../api/exports";
 import { generateMindmap, generateQcm, generateSummary, updateMindmap, updateSummary } from "../api/generation";
 import { indexDocument, listIndexes } from "../api/knowledge";
-import * as authApi from "../auth/authApi";
 import type { DocumentSummary, KnowledgeIndex, MindMap, QCM, SourceSelection, Summary } from "../api/types";
 import { useAuth } from "../auth/AuthProvider";
 import { Button } from "../components/Button";
@@ -29,7 +28,7 @@ type MakerMode = "qcm" | "summary" | "mindmap";
 type ModalMode = "configure" | "preview" | "export" | null;
 
 export function MaterialMakerPage() {
-  const { accessToken, logout } = useAuth();
+  const { accessToken } = useAuth();
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [indexes, setIndexes] = useState<KnowledgeIndex[]>([]);
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([]);
@@ -191,13 +190,6 @@ export function MaterialMakerPage() {
     setResultSummary(null);
     setResultMindmap(null);
     try {
-      try {
-        await authApi.me(accessToken);
-      } catch {
-        await logout();
-        setError("Session expired or user not found. Please log in again.");
-        return;
-      }
       await ensureIndexes();
       setStatus(`Generating ${mode.toUpperCase()}...`);
       const sourceSelection = buildSourceSelection();
