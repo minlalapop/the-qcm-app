@@ -47,7 +47,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${AUTH_DB_SCHEMA:-auth}
-      JWT_SECRET_KEY: ${AUTH_JWT_SECRET_KEY:-dev-only-auth-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       ENABLE_DEFAULT_ADMIN: ${AUTH_ENABLE_DEFAULT_ADMIN:-true}
@@ -70,7 +70,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${USER_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${USER_DB_SCHEMA:-users}
-      JWT_SECRET_KEY: ${USER_JWT_SECRET_KEY:-dev-only-user-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
     ports:
       - "8002:8000"
     depends_on:
@@ -87,7 +87,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${DOCUMENT_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${DOCUMENT_DB_SCHEMA:-documents}
-      JWT_SECRET_KEY: ${DOCUMENT_JWT_SECRET_KEY:-dev-only-document-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       STORAGE_ROOT: ${DOCUMENT_STORAGE_ROOT:-/app/storage}
       CHUNK_MAX_CHARS: 1200
       CHUNK_OVERLAP_CHARS: 180
@@ -108,7 +108,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${KNOWLEDGE_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${KNOWLEDGE_DB_SCHEMA:-knowledge}
-      JWT_SECRET_KEY: ${KNOWLEDGE_JWT_SECRET_KEY:-dev-only-knowledge-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       DOCUMENT_SERVICE_URL: ${KNOWLEDGE_DOCUMENT_SERVICE_URL:-http://document-service:8000}
       VECTOR_STORE_ROOT: ${KNOWLEDGE_VECTOR_STORE_ROOT:-/app/vector_store}
       EMBEDDING_MODEL_NAME: ${KNOWLEDGE_EMBEDDING_MODEL_NAME:-sentence-transformers/all-MiniLM-L6-v2}
@@ -132,7 +132,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${AI_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${AI_DB_SCHEMA:-ai}
-      JWT_SECRET_KEY: ${AI_JWT_SECRET_KEY:-dev-only-ai-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       KNOWLEDGE_SERVICE_URL: ${AI_KNOWLEDGE_SERVICE_URL:-http://knowledge-service:8000}
       DEFAULT_LLM_PROVIDER: openrouter
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
@@ -157,7 +157,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${GENERATION_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${GENERATION_DB_SCHEMA:-generation}
-      JWT_SECRET_KEY: ${GENERATION_JWT_SECRET_KEY:-dev-only-generation-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       AI_SERVICE_URL: ${GENERATION_AI_SERVICE_URL:-http://ai-service:8000}
       LEARNING_SERVICE_URL: ${GENERATION_LEARNING_SERVICE_URL:-http://learning-service:8000}
     ports:
@@ -178,7 +178,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${EVALUATION_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${EVALUATION_DB_SCHEMA:-evaluation}
-      JWT_SECRET_KEY: ${EVALUATION_JWT_SECRET_KEY:-dev-only-evaluation-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
     ports:
       - "8007:8000"
     depends_on:
@@ -197,7 +197,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${LEARNING_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${LEARNING_DB_SCHEMA:-learning}
-      JWT_SECRET_KEY: ${LEARNING_JWT_SECRET_KEY:-dev-only-learning-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       EVALUATION_SERVICE_URL: ${LEARNING_EVALUATION_SERVICE_URL:-http://evaluation-service:8000}
       VECTOR_STORE_ROOT: ${LEARNING_VECTOR_STORE_ROOT:-/app/vector_store}
       EMBEDDING_MODEL_NAME: ${LEARNING_EMBEDDING_MODEL_NAME:-sentence-transformers/all-MiniLM-L6-v2}
@@ -221,7 +221,7 @@ services:
       APP_ENV: development
       DATABASE_URL: ${EXPORT_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
       DB_SCHEMA: ${EXPORT_DB_SCHEMA:-export}
-      JWT_SECRET_KEY: ${EXPORT_JWT_SECRET_KEY:-dev-only-export-jwt-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       GENERATION_SERVICE_URL: ${EXPORT_GENERATION_SERVICE_URL:-http://generation-service:8000}
       STORAGE_ROOT: ${EXPORT_STORAGE_ROOT:-/app/storage}
       EXPORT_DIR_NAME: ${EXPORT_DIR_NAME:-exports}
