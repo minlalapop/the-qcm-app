@@ -45,7 +45,7 @@ services:
     container_name: qcm-auth-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${AUTH_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${AUTH_DB_SCHEMA:-auth}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
@@ -68,7 +68,7 @@ services:
     container_name: qcm-user-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${USER_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${USER_DB_SCHEMA:-users}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
     ports:
@@ -85,7 +85,7 @@ services:
     container_name: qcm-document-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${DOCUMENT_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${DOCUMENT_DB_SCHEMA:-documents}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       STORAGE_ROOT: ${DOCUMENT_STORAGE_ROOT:-/app/storage}
@@ -106,7 +106,7 @@ services:
     container_name: qcm-knowledge-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${KNOWLEDGE_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${KNOWLEDGE_DB_SCHEMA:-knowledge}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       DOCUMENT_SERVICE_URL: ${KNOWLEDGE_DOCUMENT_SERVICE_URL:-http://document-service:8000}
@@ -130,7 +130,7 @@ services:
     container_name: qcm-ai-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${AI_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${AI_DB_SCHEMA:-ai}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       KNOWLEDGE_SERVICE_URL: ${AI_KNOWLEDGE_SERVICE_URL:-http://knowledge-service:8000}
@@ -155,7 +155,7 @@ services:
     container_name: qcm-generation-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${GENERATION_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${GENERATION_DB_SCHEMA:-generation}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       AI_SERVICE_URL: ${GENERATION_AI_SERVICE_URL:-http://ai-service:8000}
@@ -176,7 +176,7 @@ services:
     container_name: qcm-evaluation-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${EVALUATION_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${EVALUATION_DB_SCHEMA:-evaluation}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
     ports:
@@ -195,7 +195,7 @@ services:
     container_name: qcm-learning-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${LEARNING_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${LEARNING_DB_SCHEMA:-learning}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       EVALUATION_SERVICE_URL: ${LEARNING_EVALUATION_SERVICE_URL:-http://evaluation-service:8000}
@@ -219,7 +219,7 @@ services:
     container_name: qcm-export-service
     environment:
       APP_ENV: development
-      DATABASE_URL: ${EXPORT_DATABASE_URL:-postgresql+psycopg://qcm_user:qcm_password@postgres:5432/qcm_app}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qcm_user}:${POSTGRES_PASSWORD:-qcm_password}@postgres:5432/${POSTGRES_DB:-qcm_app}
       DB_SCHEMA: ${EXPORT_DB_SCHEMA:-export}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       GENERATION_SERVICE_URL: ${EXPORT_GENERATION_SERVICE_URL:-http://generation-service:8000}
