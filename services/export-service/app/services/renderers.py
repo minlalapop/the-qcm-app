@@ -81,6 +81,7 @@ def render_qcm_xlsx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> 
     for question in sorted(qcm.get("questions", []), key=lambda item: item.get("order_index") or 0):
         ouvrage = _question_document_title(question, document_titles)
         chapter_reference = _chapter_reference(question)
+        chapter_excerpt = _chapter_excerpt(question)
         importance = _difficulty_to_importance(question.get("difficulty") or qcm.get("difficulty"))
         for answer in sorted(question.get("answers", []), key=lambda item: item.get("order_index") or 0):
             rows.append(
@@ -94,7 +95,7 @@ def render_qcm_xlsx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> 
                     chapter_reference,
                     question.get("question_text") or "",
                     importance,
-                    context.get("period", ""),
+                    chapter_excerpt,
                     answer.get("label") or "",
                     answer.get("answer_text") or "",
                     1 if answer.get("is_correct") else 0,
@@ -328,6 +329,10 @@ def _chapter_reference(question: dict[str, Any]) -> str:
     if question.get("source_page"):
         return f"Page {question['source_page']}"
     return ""
+
+
+def _chapter_excerpt(question: dict[str, Any]) -> str:
+    return str(question.get("citation") or "").strip()[:300]
 
 
 def _difficulty_to_importance(value: Any) -> int | str:
