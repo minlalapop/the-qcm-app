@@ -76,12 +76,13 @@ def render_qcm_xlsx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> 
     ]
     context = _qcm_academic_context(qcm)
     document_titles = qcm.get("_document_titles_by_id") or {}
+    document_pages = qcm.get("_document_pages_by_id") or {}
     rows: list[list[Any]] = [headers]
 
     for question in sorted(qcm.get("questions", []), key=lambda item: item.get("order_index") or 0):
         ouvrage = _question_document_title(question, document_titles)
         chapter_reference = _chapter_reference(question)
-        chapter_excerpt = _chapter_excerpt(question)
+        chapter_excerpt = _chapter_excerpt(question, document_pages)
         importance = _difficulty_to_importance(question.get("difficulty") or qcm.get("difficulty"))
         for answer in sorted(question.get("answers", []), key=lambda item: item.get("order_index") or 0):
             rows.append(
@@ -331,8 +332,43 @@ def _chapter_reference(question: dict[str, Any]) -> str:
     return ""
 
 
-def _chapter_excerpt(question: dict[str, Any]) -> str:
-    return str(question.get("citation") or "").strip()[:300]
+def _chapter_excerpt(question: dict[str, Any], document_pages: dict[str, dict[int, str]]) -> str:
+    page_excerpt = _source_page_excerpt(question, document_pages)
+    if page_excerpt:
+        return page_excerpt
+
+    for field in ("citation", "explanation", "question_text"):
+        value = _clean_excerpt(question.get(field))
+        if _is_informative_excerpt(value):
+            return value
+    return ""
+
+
+def _source_page_excerpt(question: dict[str, Any], document_pages: dict[str, dict[int, str]]) -> str:
+    document_id = question.get("source_document_id")
+    page_number = question.get("source_page")
+    if not document_id or not isinstance(page_number, int):
+        return ""
+
+    pages = document_pages.get(str(document_id)) or {}
+    text = pages.get(page_number)
+    if not text:
+        return ""
+    return _clean_excerpt(text)
+
+
+def _clean_excerpt(value: Any, max_length: int = 420) -> str:
+    text = " ".join(str(value or "").split())
+    if len(text) <= max_length:
+        return text
+    cut = text[:max_length].rsplit(" ", 1)[0].strip()
+    return f"{cut}..."
+
+
+def _is_informative_excerpt(value: str) -> bool:
+    normalized = value.strip().lower(" .:;-")
+    generic_values = {"en resume", "resume", "conclusion", "introduction", "section", "chapitre"}
+    return len(normalized) >= 40 and normalized not in generic_values
 
 
 def _difficulty_to_importance(value: Any) -> int | str:
@@ -445,8 +481,8 @@ def _core_props_xml() -> str:
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '
         'xmlns:dc="http://purl.org/dc/elements/1.1/">'
-        "<dc:creator>Iktibar</dc:creator>"
-        "<cp:lastModifiedBy>Iktibar</cp:lastModifiedBy>"
+        "<dc:creator>Evasym</dc:creator>"
+        "<cp:lastModifiedBy>Evasym</cp:lastModifiedBy>"
         "</cp:coreProperties>"
     )
 
@@ -456,7 +492,7 @@ def _app_props_xml() -> str:
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" '
         'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
-        "<Application>Iktibar</Application>"
+        "<Application>Evasym</Application>"
         "</Properties>"
     )
 

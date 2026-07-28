@@ -169,7 +169,10 @@ async def _export_qcm(
     try:
         qcm = await GenerationClient(token).get_qcm(qcm_id)
         if export_format == "xlsx":
-            qcm["_document_titles_by_id"] = await DocumentClient(token).get_document_titles(qcm.get("document_ids") or [])
+            document_client = DocumentClient(token)
+            document_ids = qcm.get("document_ids") or []
+            qcm["_document_titles_by_id"] = await document_client.get_document_titles(document_ids)
+            qcm["_document_pages_by_id"] = await document_client.get_document_pages_by_id(document_ids)
         return export_qcm(db, current_user, qcm, export_format, options, job)
     except Exception as exc:
         _mark_failed(db, job, exc)

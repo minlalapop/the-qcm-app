@@ -1,8 +1,8 @@
 import type { TokenResponse, User } from "./types";
 
-const ACCESS_TOKEN_KEY = "iktibar.accessToken";
-const REFRESH_TOKEN_KEY = "iktibar.refreshToken";
-const USER_KEY = "iktibar.user";
+const ACCESS_TOKEN_KEY = "evasym.accessToken";
+const REFRESH_TOKEN_KEY = "evasym.refreshToken";
+const USER_KEY = "evasym.user";
 
 export type StoredSession = {
   accessToken: string;

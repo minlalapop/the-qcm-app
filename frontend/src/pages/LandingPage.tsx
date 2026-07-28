@@ -132,7 +132,7 @@ export function LandingPage() {
       <footer className="glass-nav border-t px-4 py-8 sm:px-8 lg:px-10">
         <div className="mx-auto flex max-w-container flex-col items-center justify-between gap-4 text-sm font-semibold text-on-surface-variant md:flex-row">
           <Brand compact />
-          <p>© 2026 Iktibar. All rights reserved.</p>
+          <p>© 2026 Evasym. All rights reserved.</p>
           <div className="flex gap-6">
             <a className="transition hover:text-primary" href="#privacy">
               Privacy

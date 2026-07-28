@@ -1,8 +1,8 @@
-# QCM App : Iktibar
+# QCM App : Evasym
 
 Application QCM basee sur une architecture microservices Python/FastAPI.
 
-Nom de l'application : **Iktibar** 
+Nom de l'application : **Evasym** 
 
 ## Stockage
 
@@ -27,7 +27,7 @@ GET  /auth/me
 
 ## Frontend
 
-Le frontend Iktibar utilise React, TypeScript, Vite et Tailwind CSS.
+Le frontend Evasym utilise React, TypeScript, Vite et Tailwind CSS.
 
 Vues disponibles :
 

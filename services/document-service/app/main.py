@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Document Service for The QCM App: PDF upload, deletion, listing, extraction and cache.",
+    description="Document Service for Evasym: PDF upload, deletion, listing, extraction and cache.",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",

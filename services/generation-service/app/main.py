@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Generation Service for The QCM App: QCM, summaries, mindmaps, settings, sources and editing.",
+    description="Generation Service for Evasym: QCM, summaries, mindmaps, settings, sources and editing.",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",

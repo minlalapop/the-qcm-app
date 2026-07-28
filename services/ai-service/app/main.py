@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="AI Service for The QCM App: context builder, prompts, OpenRouter provider and response parsing.",
+    description="AI Service for Evasym: context builder, prompts, OpenRouter provider and response parsing.",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",

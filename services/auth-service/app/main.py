@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Auth Service for The QCM App: register, login, refresh, logout and current user.",
+    description="Auth Service for Evasym: register, login, refresh, logout and current user.",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",

@@ -55,7 +55,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
             Create, review and export smarter QCMs.
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-on-surface-variant">
-            Iktibar keeps generation, evaluation, learning and export workflows separated cleanly, while giving the
+            Evasym keeps generation, evaluation, learning and export workflows separated cleanly, while giving the
             teacher one calm workspace.
           </p>
         </div>
@@ -66,7 +66,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           <Brand />
         </div>
         <h2 className="font-display text-3xl font-extrabold tracking-normal text-on-surface">
-          {mode === "login" ? "Welcome back" : "Create your Iktibar account"}
+          {mode === "login" ? "Welcome back" : "Create your Evasym account"}
         </h2>
         <p className="mt-2 text-on-surface-variant">
           {mode === "login" ? "Log in to continue to your dashboard." : "Start generating specialized material."}

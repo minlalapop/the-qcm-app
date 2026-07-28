@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     DEFAULT_LLM_PROVIDER: str = "openrouter"
     OPENROUTER_API_KEY: str | None = None
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-    OPENROUTER_APP_TITLE: str = "The QCM App"
+    OPENROUTER_APP_TITLE: str = "Evasym"
     OPENROUTER_HTTP_REFERER: str = "http://localhost:8005"
     DEFAULT_TOP_K: int = 6
     DEFAULT_TEMPERATURE: float = 0.2

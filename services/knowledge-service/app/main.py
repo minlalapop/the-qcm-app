@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Knowledge Service for The QCM App: semantic chunking, MiniLM embeddings, FAISS indexing and retrieval.",
+    description="Knowledge Service for Evasym: semantic chunking, MiniLM embeddings, FAISS indexing and retrieval.",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",

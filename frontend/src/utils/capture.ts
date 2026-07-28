@@ -62,7 +62,7 @@ export function safeDownloadName(value: string, extension: string): string {
     .replace(/[^a-z0-9-_]+/gi, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
-  return `${cleaned || "iktibar-export"}.${extension}`;
+  return `${cleaned || "evasym-export"}.${extension}`;
 }
 
 function downloadBlob(blob: Blob, filename: string): void {

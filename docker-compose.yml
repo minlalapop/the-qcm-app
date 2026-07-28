@@ -2,7 +2,7 @@ services:
   frontend:
     build:
       context: ./frontend
-    container_name: iktibar-frontend
+    container_name: evasym-frontend
     environment:
       VITE_AUTH_SERVICE_URL: http://localhost:8001
       VITE_USER_SERVICE_URL: http://localhost:8002
@@ -53,7 +53,7 @@ services:
       ENABLE_DEFAULT_ADMIN: ${AUTH_ENABLE_DEFAULT_ADMIN:-true}
       DEFAULT_ADMIN_EMAIL: ${AUTH_DEFAULT_ADMIN_EMAIL:-admin@example.com}
       DEFAULT_ADMIN_PASSWORD: ${AUTH_DEFAULT_ADMIN_PASSWORD:-admin1234}
-      DEFAULT_ADMIN_FULL_NAME: ${AUTH_DEFAULT_ADMIN_FULL_NAME:-Admin Iktibar}
+      DEFAULT_ADMIN_FULL_NAME: ${AUTH_DEFAULT_ADMIN_FULL_NAME:-Admin Evasym}
     ports:
       - "8001:8000"
     depends_on:
@@ -137,7 +137,7 @@ services:
       DEFAULT_LLM_PROVIDER: openrouter
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
-      OPENROUTER_APP_TITLE: ${OPENROUTER_APP_TITLE:-The QCM App}
+      OPENROUTER_APP_TITLE: ${OPENROUTER_APP_TITLE:-Evasym}
       OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-http://localhost:8005}
     ports:
       - "8005:8000"

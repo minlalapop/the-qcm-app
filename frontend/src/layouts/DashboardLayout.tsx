@@ -78,7 +78,7 @@ export function DashboardLayout() {
             Log out
           </button>
           <p className="px-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-on-surface-variant/60">
-            © 2026 Iktibar
+            © 2026 Evasym
           </p>
         </div>
       </aside>
@@ -88,7 +88,7 @@ export function DashboardLayout() {
           <div>
             <p className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-primary">
               <Sparkles size={16} />
-              Iktibar workspace
+              Evasym workspace
             </p>
             <h1 className="font-display text-4xl font-extrabold tracking-normal text-on-surface sm:text-5xl">
               Welcome back, {displayName}

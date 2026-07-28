@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Learning Service for The QCM App: feedback analysis, prompt memory, teacher preferences and feedback vector store.",
+    description="Learning Service for Evasym: feedback analysis, prompt memory, teacher preferences and feedback vector store.",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",

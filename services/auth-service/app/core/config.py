@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     ENABLE_DEFAULT_ADMIN: bool = True
     DEFAULT_ADMIN_EMAIL: str = "admin@example.com"
     DEFAULT_ADMIN_PASSWORD: str = "admin1234"
-    DEFAULT_ADMIN_FULL_NAME: str = "Admin Iktibar"
+    DEFAULT_ADMIN_FULL_NAME: str = "Admin Evasym"
 
     CORS_ORIGINS: list[AnyHttpUrl] | list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
