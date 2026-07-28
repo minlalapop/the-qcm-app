@@ -27,5 +27,7 @@ class DocumentClient:
         for document_id in document_ids:
             document = await self.get_document(document_id)
             if document:
-                titles[document_id] = document.get("original_filename") or document.get("title") or document_id
+                title = document.get("original_filename") or document.get("title")
+                if title:
+                    titles[document_id] = title
         return titles

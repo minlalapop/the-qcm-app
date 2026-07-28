@@ -80,7 +80,7 @@ def render_qcm_xlsx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> 
 
     for question in sorted(qcm.get("questions", []), key=lambda item: item.get("order_index") or 0):
         ouvrage = _question_document_title(question, document_titles)
-        chapter_title = _chapter_title(question)
+        chapter_reference = _chapter_reference(question)
         importance = _difficulty_to_importance(question.get("difficulty") or qcm.get("difficulty"))
         for answer in sorted(question.get("answers", []), key=lambda item: item.get("order_index") or 0):
             rows.append(
@@ -91,7 +91,7 @@ def render_qcm_xlsx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> 
                     context.get("module", ""),
                     context.get("subject", ""),
                     ouvrage,
-                    chapter_title,
+                    chapter_reference,
                     question.get("question_text") or "",
                     importance,
                     context.get("period", ""),
@@ -317,21 +317,17 @@ def _qcm_academic_context(qcm: dict[str, Any]) -> dict[str, str]:
 
 def _question_document_title(question: dict[str, Any], document_titles: dict[str, str]) -> str:
     document_id = question.get("source_document_id")
-    if not document_id:
-        return ""
-    return document_titles.get(str(document_id), str(document_id))
+    if document_id and str(document_id) in document_titles:
+        return document_titles[str(document_id)]
+    if document_titles:
+        return next(iter(document_titles.values()))
+    return ""
 
 
-def _chapter_title(question: dict[str, Any]) -> str:
-    citation = str(question.get("citation") or "").strip()
-    if not citation:
-        return ""
-    for separator in (" - ", ":", "—", "–"):
-        if separator in citation:
-            first_part = citation.split(separator, 1)[0].strip()
-            if first_part:
-                return first_part[:180]
-    return citation[:180]
+def _chapter_reference(question: dict[str, Any]) -> str:
+    if question.get("source_page"):
+        return f"Page {question['source_page']}"
+    return ""
 
 
 def _difficulty_to_importance(value: Any) -> int | str:
