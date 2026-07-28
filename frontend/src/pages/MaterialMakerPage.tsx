@@ -1,5 +1,7 @@
 import {
   BookOpen,
+  ChevronDown,
+  ChevronUp,
   Download,
   FileQuestion,
   FileText,
@@ -26,6 +28,15 @@ import { classNames, formatBytes, formatDate } from "../utils/format";
 
 type MakerMode = "qcm" | "summary" | "mindmap";
 type ModalMode = "configure" | "preview" | "export" | null;
+type AdvancedSettings = {
+  moduleName: string;
+  academicYear: string;
+  filiere: string;
+  semester: string;
+  teacherName: string;
+  learningObjectives: string;
+  extraContext: string;
+};
 
 export function MaterialMakerPage() {
   const { accessToken } = useAuth();
@@ -50,6 +61,15 @@ export function MaterialMakerPage() {
   const [difficulty, setDifficulty] = useState("medium");
   const [topK, setTopK] = useState(6);
   const [maxSections, setMaxSections] = useState(5);
+  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
+    moduleName: "",
+    academicYear: "",
+    filiere: "",
+    semester: "",
+    teacherName: "",
+    learningObjectives: "",
+    extraContext: "",
+  });
   const [resultQcm, setResultQcm] = useState<QCM | null>(null);
   const [resultSummary, setResultSummary] = useState<Summary | null>(null);
   const [resultMindmap, setResultMindmap] = useState<MindMap | null>(null);
@@ -179,6 +199,14 @@ export function MaterialMakerPage() {
     };
   }
 
+  function buildAdvancedMetadata(): Record<string, string> {
+    return Object.fromEntries(
+      Object.entries(advancedSettings)
+        .map(([key, value]) => [key, value.trim()])
+        .filter(([, value]) => value.length > 0),
+    );
+  }
+
   async function generate() {
     if (!accessToken || selectedDocumentIds.length === 0) {
       setError("Select at least one PDF source");
@@ -193,6 +221,7 @@ export function MaterialMakerPage() {
       await ensureIndexes();
       setStatus(`Generating ${mode.toUpperCase()}...`);
       const sourceSelection = buildSourceSelection();
+      const advancedMetadata = buildAdvancedMetadata();
       if (mode === "qcm") {
         setResultQcm(
           await generateQcm(accessToken, {
@@ -205,7 +234,7 @@ export function MaterialMakerPage() {
             temperature: 0.2,
             max_tokens: 1800,
             duplication_check: true,
-            custom_rules: { require_justification: true, single_correct_answer: true },
+            custom_rules: { require_justification: true, single_correct_answer: true, advanced_metadata: advancedMetadata },
           }),
         );
       } else if (mode === "summary") {
@@ -218,7 +247,7 @@ export function MaterialMakerPage() {
             top_k: topK,
             temperature: 0.15,
             max_tokens: 2200,
-            custom_rules: { concise: true, organized: true },
+            custom_rules: { concise: true, organized: true, advanced_metadata: advancedMetadata },
           }),
         );
       } else {
@@ -230,7 +259,7 @@ export function MaterialMakerPage() {
             top_k: Math.max(topK, 10),
             temperature: 0.2,
             max_tokens: 3600,
-            custom_rules: { concise_nodes: true, rich_hierarchy: true, notebooklm_style: true },
+            custom_rules: { concise_nodes: true, rich_hierarchy: true, notebooklm_style: true, advanced_metadata: advancedMetadata },
           }),
         );
       }
@@ -407,6 +436,8 @@ export function MaterialMakerPage() {
             setMaxSections={setMaxSections}
             focusText={focusText}
             setFocusText={setFocusText}
+            advancedSettings={advancedSettings}
+            setAdvancedSettings={setAdvancedSettings}
             documents={documents}
             selectedDocumentIds={selectedDocumentIds}
             onToggle={toggleDocument}
@@ -693,6 +724,8 @@ function ConfigureForm({
   setMaxSections,
   focusText,
   setFocusText,
+  advancedSettings,
+  setAdvancedSettings,
   documents,
   selectedDocumentIds,
   onToggle,
@@ -716,11 +749,19 @@ function ConfigureForm({
   setMaxSections: (value: number) => void;
   focusText: string;
   setFocusText: (value: string) => void;
+  advancedSettings: AdvancedSettings;
+  setAdvancedSettings: (value: AdvancedSettings) => void;
   documents: DocumentSummary[];
   selectedDocumentIds: string[];
   onToggle: (document: DocumentSummary, selected: boolean) => void;
   onConfirm: () => void;
 }) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  function setAdvancedValue(key: keyof AdvancedSettings, value: string) {
+    setAdvancedSettings({ ...advancedSettings, [key]: value });
+  }
+
   return (
     <div className="max-h-[75vh] overflow-auto pr-1">
       <div className="space-y-5">
@@ -808,6 +849,46 @@ function ConfigureForm({
         <Field label="Consignes speciales">
           <textarea className="form-input min-h-28 py-3" value={focusText} onChange={(event) => setFocusText(event.target.value)} placeholder="Ex: insiste sur les criteres diagnostiques, evite les questions ambigues." />
         </Field>
+
+        <div className="rounded-2xl bg-white/55 p-3">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-extrabold text-primary transition hover:bg-white/60"
+            onClick={() => setShowAdvanced((current) => !current)}
+          >
+            <span>Parametres avances</span>
+            {showAdvanced ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+
+          {showAdvanced && (
+            <div className="mt-3 max-h-72 overflow-auto pr-1">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Module">
+                  <input className="form-input" value={advancedSettings.moduleName} onChange={(event) => setAdvancedValue("moduleName", event.target.value)} />
+                </Field>
+                <Field label="Annee universitaire">
+                  <input className="form-input" placeholder="ex: 2026-2027" value={advancedSettings.academicYear} onChange={(event) => setAdvancedValue("academicYear", event.target.value)} />
+                </Field>
+                <Field label="Filiere">
+                  <input className="form-input" value={advancedSettings.filiere} onChange={(event) => setAdvancedValue("filiere", event.target.value)} />
+                </Field>
+                <Field label="Semestre">
+                  <input className="form-input" value={advancedSettings.semester} onChange={(event) => setAdvancedValue("semester", event.target.value)} />
+                </Field>
+                <Field label="Enseignant">
+                  <input className="form-input" value={advancedSettings.teacherName} onChange={(event) => setAdvancedValue("teacherName", event.target.value)} />
+                </Field>
+                <Field label="Objectifs pedagogiques">
+                  <textarea className="form-input min-h-24 py-3" value={advancedSettings.learningObjectives} onChange={(event) => setAdvancedValue("learningObjectives", event.target.value)} />
+                </Field>
+                <label className="block min-w-0 md:col-span-2">
+                  <span className="mb-2 block text-sm font-bold">Contexte additionnel</span>
+                  <textarea className="form-input min-h-24 py-3" value={advancedSettings.extraContext} onChange={(event) => setAdvancedValue("extraContext", event.target.value)} />
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="flex justify-end">
           <Button onClick={onConfirm}>OK</Button>
