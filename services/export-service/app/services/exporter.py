@@ -9,11 +9,11 @@ from app.models.export import Export
 from app.models.export_job import ExportJob
 from app.schemas.export import ExportOptions, UserContext
 from app.services.renderers import (
-    render_json,
     render_mermaid_code,
     render_mermaid_png,
     render_qcm_docx,
     render_qcm_pdf,
+    render_qcm_xlsx,
     render_summary_docx,
     render_summary_pdf,
 )
@@ -23,7 +23,7 @@ from app.services.storage import ensure_export_storage, relative_export_path, sa
 MIME_TYPES = {
     "pdf": "application/pdf",
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "json": "application/json",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "mermaid": "text/vnd.mermaid",
     "png": "image/png",
 }
@@ -57,8 +57,8 @@ def export_qcm(
         render_qcm_pdf(qcm, path, options)
     elif export_format == "docx":
         render_qcm_docx(qcm, path, options)
-    elif export_format == "json":
-        render_json(qcm, path)
+    elif export_format == "xlsx":
+        render_qcm_xlsx(qcm, path, options)
     else:
         raise ValueError(f"Unsupported QCM export format: {export_format}")
     return _save_export(db, current_user, "qcm", qcm["id"], export_format, title, path, job, options)
@@ -78,8 +78,6 @@ def export_summary(
         render_summary_pdf(summary, path, options)
     elif export_format == "docx":
         render_summary_docx(summary, path, options)
-    elif export_format == "json":
-        render_json(summary, path)
     else:
         raise ValueError(f"Unsupported summary export format: {export_format}")
     return _save_export(db, current_user, "summary", summary["id"], export_format, title, path, job, options)
@@ -100,8 +98,6 @@ def export_mindmap(
         render_mermaid_png(mindmap, path)
     elif export_format == "mermaid":
         render_mermaid_code(mindmap, path)
-    elif export_format == "json":
-        render_json(mindmap, path)
     else:
         raise ValueError(f"Unsupported mindmap export format: {export_format}")
     return _save_export(db, current_user, "mindmap", mindmap["id"], export_format, title, path, job, options)

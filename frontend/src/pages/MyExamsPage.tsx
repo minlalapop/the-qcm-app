@@ -35,7 +35,7 @@ export function MyExamsPage() {
     if (selectedQcm?.id === qcmId) setSelectedQcm(null);
   }
 
-  async function exportSelected(format: "pdf" | "docx" | "json") {
+  async function exportSelected(format: "pdf" | "docx" | "xlsx") {
     if (!accessToken || !selectedQcm) return;
     setError(null);
     setStatus(`Exporting ${format.toUpperCase()}...`);
@@ -114,7 +114,7 @@ export function MyExamsPage() {
                 PDF
               </Button>
               <Button variant="ghost" onClick={() => exportSelected("docx")} disabled={!selectedQcm}>DOCX</Button>
-              <Button variant="ghost" onClick={() => exportSelected("json")} disabled={!selectedQcm}>JSON</Button>
+              <Button variant="ghost" onClick={() => exportSelected("xlsx")} disabled={!selectedQcm}>Excel</Button>
             </div>
           </div>
           {status && <p className="mt-4 rounded-2xl bg-primary/10 px-4 py-3 text-sm font-bold text-primary">{status}</p>}

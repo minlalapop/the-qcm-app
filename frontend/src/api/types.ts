@@ -64,6 +64,14 @@ export type QCM = {
   difficulty: string;
   source_selection: Record<string, unknown>;
   ai_request_ids: string[];
+  settings?: {
+    number_of_questions: number;
+    number_of_options: number;
+    difficulty: string;
+    source_selection: Record<string, unknown>;
+    duplication_check: boolean;
+    custom_rules: Record<string, unknown>;
+  } | null;
   questions: Question[];
   created_at: string;
   updated_at: string;

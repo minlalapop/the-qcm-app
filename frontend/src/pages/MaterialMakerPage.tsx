@@ -268,19 +268,19 @@ export function MaterialMakerPage() {
 
     const establishmentOptions = uniqueOptionsByName(academicOptions.establishments);
     const establishment = findOptionByName(establishmentOptions, academicContext.establishment);
-    if (!establishment) return "Choisis un etablissement dans la liste.";
+    if (!establishment) return "Veuillez selectionner un etablissement dans la liste.";
 
     const formationOptions = uniqueOptionsByName(academicOptions.formations.filter((formation) => formation.establishmentId === establishment.id));
     const formation = findOptionByName(formationOptions, academicContext.formation);
-    if (!formation) return "Choisis une formation / filiere dans la liste.";
+    if (!formation) return "Veuillez selectionner une formation / filiere dans la liste.";
 
     const levelOptions = uniqueOptionsByName(academicOptions.levels.filter((level) => level.formationId === formation.id));
     const level = findOptionByName(levelOptions, academicContext.level);
-    if (!level) return "Choisis un niveau / une annee d'etude dans la liste.";
+    if (!level) return "Veuillez selectionner un niveau / une annee d'etude dans la liste.";
 
     const periodOptions = uniqueOptionsByName(academicOptions.periods.filter((period) => period.levelId === level.id));
     const period = findOptionByName(periodOptions, academicContext.period);
-    if (!period) return "Choisis un semestre / une periode dans la liste.";
+    if (!period) return "Veuillez selectionner un semestre / une periode dans la liste.";
 
     return null;
   }
@@ -355,18 +355,18 @@ export function MaterialMakerPage() {
     }
   }
 
-  async function handleExport(format: "pdf" | "docx" | "json" | "png" | "mermaid") {
+  async function handleExport(format: "pdf" | "docx" | "xlsx" | "png" | "mermaid") {
     if (!accessToken) return;
     setError(null);
     setIsExporting(true);
     setStatus(`Exporting ${format.toUpperCase()}...`);
     try {
       let exported;
-      if (resultQcm && (format === "pdf" || format === "docx" || format === "json")) {
+      if (resultQcm && (format === "pdf" || format === "docx" || format === "xlsx")) {
         exported = await exportQcm(accessToken, resultQcm.id, format);
-      } else if (resultSummary && (format === "pdf" || format === "docx" || format === "json")) {
+      } else if (resultSummary && (format === "pdf" || format === "docx")) {
         exported = await exportSummary(accessToken, resultSummary.id, format);
-      } else if (resultMindmap && (format === "png" || format === "mermaid" || format === "json")) {
+      } else if (resultMindmap && (format === "png" || format === "mermaid")) {
         exported = await exportMindmap(accessToken, resultMindmap.id, format);
       } else {
         setError("This export format is not available for the current material");
@@ -579,7 +579,7 @@ function SummaryResult({
 }: {
   summary: Summary;
   onChange: (summary: Summary) => void;
-  onExport: (format: "pdf" | "docx" | "json") => void;
+  onExport: (format: "pdf" | "docx") => void;
 }) {
   const { accessToken } = useAuth();
   const [titleDraft, setTitleDraft] = useState(summary.title);
@@ -1012,7 +1012,7 @@ function ConfigureForm({
                   value={academicContext.establishment}
                   options={establishmentOptions}
                   required
-                  placeholder="Commence a taper le nom..."
+                  placeholder="Commencez a taper le nom..."
                   onChange={(value) => setAcademicValue("establishment", value)}
                 />
                 <AutocompleteField
@@ -1021,7 +1021,7 @@ function ConfigureForm({
                   options={formationOptions}
                   required
                   disabled={!selectedEstablishment}
-                  placeholder={selectedEstablishment ? "Commence a taper la formation..." : "Choisis d'abord un etablissement"}
+                  placeholder={selectedEstablishment ? "Commencez a taper la formation..." : ""}
                   onChange={(value) => setAcademicValue("formation", value)}
                 />
                 <AutocompleteField
@@ -1030,7 +1030,7 @@ function ConfigureForm({
                   options={levelOptions}
                   required
                   disabled={!selectedFormation}
-                  placeholder={selectedFormation ? "Commence a taper le niveau..." : "Choisis d'abord une formation"}
+                  placeholder={selectedFormation ? "Commencez a taper le niveau..." : ""}
                   onChange={(value) => setAcademicValue("level", value)}
                 />
                 <AutocompleteField
@@ -1039,7 +1039,7 @@ function ConfigureForm({
                   options={periodOptions}
                   required
                   disabled={!selectedLevel}
-                  placeholder={selectedLevel ? "Commence a taper la periode..." : "Choisis d'abord un niveau"}
+                  placeholder={selectedLevel ? "Commencez a taper la periode..." : ""}
                   onChange={(value) => setAcademicValue("period", value)}
                 />
                 <AutocompleteField
@@ -1047,7 +1047,7 @@ function ConfigureForm({
                   value={academicContext.module}
                   options={moduleOptions}
                   disabled={!selectedPeriod}
-                  placeholder={selectedPeriod ? "Optionnel" : "Choisis d'abord une periode"}
+                  placeholder={selectedPeriod ? "Optionnel" : ""}
                   onChange={(value) => setAcademicValue("module", value)}
                 />
                 <AutocompleteField
@@ -1055,7 +1055,7 @@ function ConfigureForm({
                   value={academicContext.subject}
                   options={subjectOptions}
                   disabled={!selectedModule}
-                  placeholder={selectedModule ? "Optionnel" : "Choisis d'abord un module"}
+                  placeholder={selectedModule ? "Optionnel" : ""}
                   onChange={(value) => setAcademicValue("subject", value)}
                 />
               </div>
@@ -1140,7 +1140,7 @@ function AutocompleteField({
           ))}
         </div>
       )}
-      {required && value && !hasExactMatch && <p className="mt-2 text-xs font-bold text-error">Choisis une valeur proposee dans la liste.</p>}
+      {required && value && !hasExactMatch && <p className="mt-2 text-xs font-bold text-error">Veuillez selectionner une valeur proposee dans la liste.</p>}
     </label>
   );
 }
@@ -1183,22 +1183,27 @@ function ExportOptions({
   resultQcm: QCM | null;
   resultSummary: Summary | null;
   resultMindmap: MindMap | null;
-  onExport: (format: "pdf" | "docx" | "json" | "png" | "mermaid") => void;
+  onExport: (format: "pdf" | "docx" | "xlsx" | "png" | "mermaid") => void;
   isBusy: boolean;
 }) {
   if (!hasGeneratedMaterial) {
     return <p className="rounded-2xl bg-white/70 p-5 text-sm font-bold text-on-surface-variant">Generate material first, then export it.</p>;
   }
 
-  const formats: Array<{ format: "pdf" | "docx" | "json" | "png" | "mermaid"; label: string }> = resultMindmap
+  const formats: Array<{ format: "pdf" | "docx" | "xlsx" | "png" | "mermaid"; label: string }> = resultMindmap
     ? [
         { format: "mermaid", label: "Mermaid code" },
       ]
-    : [
-        { format: "pdf", label: "PDF" },
-        { format: "docx", label: "DOCX" },
-        { format: "json", label: "JSON" },
-      ];
+    : resultQcm
+      ? [
+          { format: "pdf", label: "PDF" },
+          { format: "docx", label: "DOCX" },
+          { format: "xlsx", label: "Excel" },
+        ]
+      : [
+          { format: "pdf", label: "PDF" },
+          { format: "docx", label: "DOCX" },
+        ];
 
   const title = resultQcm?.title ?? resultSummary?.title ?? resultMindmap?.title ?? "Generated material";
 

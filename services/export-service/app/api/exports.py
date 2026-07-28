@@ -39,15 +39,15 @@ async def export_qcm_docx_endpoint(
     return await _export_qcm(qcm_id, "docx", options, db, current_user, token)
 
 
-@router.post("/qcms/{qcm_id}/json", response_model=ExportPublic, status_code=status.HTTP_201_CREATED)
-async def export_qcm_json_endpoint(
+@router.post("/qcms/{qcm_id}/xlsx", response_model=ExportPublic, status_code=status.HTTP_201_CREATED)
+async def export_qcm_xlsx_endpoint(
     qcm_id: str,
     options: ExportOptions = Body(default_factory=ExportOptions),
     db: Session = Depends(get_db),
     current_user: UserContext = Depends(get_current_user_context),
     token: str = Depends(get_bearer_token),
 ) -> ExportPublic:
-    return await _export_qcm(qcm_id, "json", options, db, current_user, token)
+    return await _export_qcm(qcm_id, "xlsx", options, db, current_user, token)
 
 
 @router.post("/summaries/{summary_id}/pdf", response_model=ExportPublic, status_code=status.HTTP_201_CREATED)
@@ -72,17 +72,6 @@ async def export_summary_docx_endpoint(
     return await _export_summary(summary_id, "docx", options, db, current_user, token)
 
 
-@router.post("/summaries/{summary_id}/json", response_model=ExportPublic, status_code=status.HTTP_201_CREATED)
-async def export_summary_json_endpoint(
-    summary_id: str,
-    options: ExportOptions = Body(default_factory=ExportOptions),
-    db: Session = Depends(get_db),
-    current_user: UserContext = Depends(get_current_user_context),
-    token: str = Depends(get_bearer_token),
-) -> ExportPublic:
-    return await _export_summary(summary_id, "json", options, db, current_user, token)
-
-
 @router.post("/mindmaps/{mindmap_id}/png", response_model=ExportPublic, status_code=status.HTTP_201_CREATED)
 async def export_mindmap_png_endpoint(
     mindmap_id: str,
@@ -103,17 +92,6 @@ async def export_mindmap_mermaid_endpoint(
     token: str = Depends(get_bearer_token),
 ) -> ExportPublic:
     return await _export_mindmap(mindmap_id, "mermaid", options, db, current_user, token)
-
-
-@router.post("/mindmaps/{mindmap_id}/json", response_model=ExportPublic, status_code=status.HTTP_201_CREATED)
-async def export_mindmap_json_endpoint(
-    mindmap_id: str,
-    options: ExportOptions = Body(default_factory=ExportOptions),
-    db: Session = Depends(get_db),
-    current_user: UserContext = Depends(get_current_user_context),
-    token: str = Depends(get_bearer_token),
-) -> ExportPublic:
-    return await _export_mindmap(mindmap_id, "json", options, db, current_user, token)
 
 
 @router.get("", response_model=list[ExportPublic])

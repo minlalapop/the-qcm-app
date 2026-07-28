@@ -2,7 +2,7 @@ import { apiRequest } from "./http";
 import { env } from "../env";
 import type { ExportJob, ExportRecord } from "./types";
 
-export type ExportFormat = "pdf" | "docx" | "json" | "png" | "mermaid";
+export type ExportFormat = "pdf" | "docx" | "xlsx" | "png" | "mermaid";
 
 export function listExports(token: string): Promise<ExportRecord[]> {
   return apiRequest<ExportRecord[]>(env.exportBaseUrl, "/exports", { token });
@@ -12,7 +12,7 @@ export function listExportJobs(token: string): Promise<ExportJob[]> {
   return apiRequest<ExportJob[]>(env.exportBaseUrl, "/exports/jobs", { token });
 }
 
-export function exportQcm(token: string, qcmId: string, format: "pdf" | "docx" | "json"): Promise<ExportRecord> {
+export function exportQcm(token: string, qcmId: string, format: "pdf" | "docx" | "xlsx"): Promise<ExportRecord> {
   return apiRequest<ExportRecord>(env.exportBaseUrl, `/exports/qcms/${qcmId}/${format}`, {
     method: "POST",
     token,
@@ -20,7 +20,7 @@ export function exportQcm(token: string, qcmId: string, format: "pdf" | "docx" |
   });
 }
 
-export function exportMindmap(token: string, mindmapId: string, format: "png" | "mermaid" | "json"): Promise<ExportRecord> {
+export function exportMindmap(token: string, mindmapId: string, format: "png" | "mermaid"): Promise<ExportRecord> {
   return apiRequest<ExportRecord>(env.exportBaseUrl, `/exports/mindmaps/${mindmapId}/${format}`, {
     method: "POST",
     token,
@@ -28,7 +28,7 @@ export function exportMindmap(token: string, mindmapId: string, format: "png" | 
   });
 }
 
-export function exportSummary(token: string, summaryId: string, format: "pdf" | "docx" | "json"): Promise<ExportRecord> {
+export function exportSummary(token: string, summaryId: string, format: "pdf" | "docx"): Promise<ExportRecord> {
   return apiRequest<ExportRecord>(env.exportBaseUrl, `/exports/summaries/${summaryId}/${format}`, {
     method: "POST",
     token,

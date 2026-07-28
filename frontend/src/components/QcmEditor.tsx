@@ -1,4 +1,4 @@
-import { CheckCircle2, Download, Save, Trash2 } from "lucide-react";
+import { CheckCircle2, Download, Pencil, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../auth/AuthProvider";
@@ -17,19 +17,21 @@ export function QcmEditor({
   documents?: DocumentSummary[];
   onOpenSource?: (documentId: string) => void;
   onChange: (qcm: QCM) => void;
-  onExport?: (format: "pdf" | "docx" | "json") => void;
+  onExport?: (format: "pdf" | "docx" | "xlsx") => void;
 }) {
   const { accessToken } = useAuth();
   const [title, setTitle] = useState(qcm.title);
   const [status, setStatus] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const documentById = useMemo(() => new Map(documents.map((document) => [document.id, document])), [documents]);
 
   useEffect(() => {
     setTitle(qcm.title);
+    setIsEditing(false);
   }, [qcm.id, qcm.title]);
 
   async function saveAll() {
-    if (!accessToken) return;
+    if (!accessToken || !isEditing) return;
     setStatus("Saving QCM...");
     const updatedQcm = await updateQcm(accessToken, qcm.id, { title });
     const updatedQuestions = [];
@@ -52,11 +54,12 @@ export function QcmEditor({
       );
     }
     onChange({ ...updatedQcm, questions: updatedQuestions });
+    setIsEditing(false);
     setStatus("QCM saved");
   }
 
   async function removeQuestion(questionId: string) {
-    if (!accessToken) return;
+    if (!accessToken || !isEditing) return;
     setStatus("Deleting question...");
     await deleteQuestion(accessToken, qcm.id, questionId);
     onChange({ ...qcm, questions: qcm.questions.filter((question) => question.id !== questionId) });
@@ -80,6 +83,7 @@ export function QcmEditor({
           <input
             className="h-12 w-full min-w-0 rounded-2xl border border-outline-variant bg-white/70 px-4 font-display text-xl font-bold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
             value={title}
+            disabled={!isEditing}
             onChange={(event) => setTitle(event.target.value)}
           />
         </div>
@@ -91,7 +95,7 @@ export function QcmEditor({
                 PDF
               </Button>
               <Button variant="ghost" onClick={() => onExport("docx")}>DOCX</Button>
-              <Button variant="ghost" onClick={() => onExport("json")}>JSON</Button>
+              <Button variant="ghost" onClick={() => onExport("xlsx")}>Excel</Button>
             </>
           )}
         </div>
@@ -108,6 +112,7 @@ export function QcmEditor({
               </span>
               <button
                 className="rounded-full p-2 text-on-surface-variant transition hover:bg-error-container hover:text-error"
+                disabled={!isEditing}
                 onClick={() => removeQuestion(question.id)}
               >
                 <Trash2 size={17} />
@@ -117,6 +122,7 @@ export function QcmEditor({
             <textarea
               className="min-h-24 w-full min-w-0 rounded-2xl border border-outline-variant bg-white/80 p-4 font-semibold outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
               value={question.question_text}
+              disabled={!isEditing}
               onChange={(event) => patchQuestion(question.id, (item) => ({ ...item, question_text: event.target.value }))}
             />
 
@@ -132,6 +138,7 @@ export function QcmEditor({
                     <input
                       className="h-11 min-w-0 rounded-xl border border-outline-variant bg-white px-3 text-sm outline-none"
                       value={answer.answer_text}
+                      disabled={!isEditing}
                       onChange={(event) =>
                         patchQuestion(question.id, (item) => ({
                           ...item,
@@ -145,6 +152,7 @@ export function QcmEditor({
                       className={`flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold transition ${
                         answer.is_correct ? "bg-primary text-white" : "bg-surface-container text-on-surface-variant"
                       }`}
+                      disabled={!isEditing}
                       onClick={() =>
                         patchQuestion(question.id, (item) => ({
                           ...item,
@@ -170,6 +178,7 @@ export function QcmEditor({
               <textarea
                 className="min-h-20 w-full min-w-0 rounded-2xl border border-outline-variant bg-white/80 p-4 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
                 value={question.explanation ?? ""}
+                disabled={!isEditing}
                 onChange={(event) => patchQuestion(question.id, (item) => ({ ...item, explanation: event.target.value }))}
               />
             </label>
@@ -179,8 +188,12 @@ export function QcmEditor({
         ))}
       </div>
 
-      <div className="mt-6 flex justify-end">
-        <Button variant="secondary" onClick={saveAll}>
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
+        <Button variant="ghost" onClick={() => setIsEditing(true)} disabled={isEditing}>
+          <Pencil size={17} />
+          Modify
+        </Button>
+        <Button variant="secondary" onClick={saveAll} disabled={!isEditing}>
           <Save size={17} />
           Save QCM
         </Button>

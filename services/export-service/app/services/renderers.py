@@ -1,7 +1,8 @@
-import json
 import textwrap
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from docx import Document
 from PIL import Image, ImageDraw, ImageFont
@@ -57,6 +58,51 @@ def render_qcm_docx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> 
     doc.save(path)
 
 
+def render_qcm_xlsx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> None:
+    headers = [
+        "etablissement",
+        "formation",
+        "promotion",
+        "module",
+        "element",
+        "ouvrage",
+        "chapitre_ouv",
+        "question",
+        "ordre_importance",
+        "chapitre_element",
+        "lettre",
+        "choix",
+        "Reponse (0,1)",
+    ]
+    context = _qcm_academic_context(qcm)
+    rows: list[list[Any]] = [headers]
+    ouvrage = options.title or qcm.get("title") or ""
+
+    for question in sorted(qcm.get("questions", []), key=lambda item: item.get("order_index") or 0):
+        source_reference = _source_reference(question)
+        importance = _difficulty_to_importance(question.get("difficulty") or qcm.get("difficulty"))
+        for answer in sorted(question.get("answers", []), key=lambda item: item.get("order_index") or 0):
+            rows.append(
+                [
+                    context.get("establishment", ""),
+                    context.get("formation", ""),
+                    context.get("level", ""),
+                    context.get("module", ""),
+                    context.get("subject", ""),
+                    ouvrage,
+                    source_reference,
+                    question.get("question_text") or "",
+                    importance,
+                    context.get("period", ""),
+                    answer.get("label") or "",
+                    answer.get("answer_text") or "",
+                    1 if answer.get("is_correct") else 0,
+                ],
+            )
+
+    _write_xlsx(path, rows)
+
+
 def render_summary_docx(summary: dict[str, Any], path: Path, options: ExportOptions) -> None:
     doc = Document()
     doc.add_heading(options.title or summary.get("title") or "Summary", level=1)
@@ -64,10 +110,6 @@ def render_summary_docx(summary: dict[str, Any], path: Path, options: ExportOpti
     if options.include_sources:
         doc.add_paragraph(f"Sources: {', '.join(summary.get('document_ids') or [])}")
     doc.save(path)
-
-
-def render_json(resource: dict[str, Any], path: Path) -> None:
-    path.write_text(json.dumps(resource, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def render_mermaid_code(mindmap: dict[str, Any], path: Path) -> str:
@@ -261,6 +303,150 @@ def _clean_mermaid_label(value: str) -> str:
 
 def _count_visible_nodes(node: dict[str, Any]) -> int:
     return 1 + sum(_count_visible_nodes(child) for child in node.get("children", [])[:8])
+
+
+def _qcm_academic_context(qcm: dict[str, Any]) -> dict[str, str]:
+    settings = qcm.get("settings") or {}
+    custom_rules = settings.get("custom_rules") or {}
+    metadata = custom_rules.get("advanced_metadata") or {}
+    if not isinstance(metadata, dict):
+        return {}
+    return {str(key): str(value) for key, value in metadata.items() if value is not None}
+
+
+def _source_reference(question: dict[str, Any]) -> str:
+    parts = []
+    if question.get("source_page"):
+        parts.append(f"Page {question['source_page']}")
+    if question.get("citation"):
+        parts.append(str(question["citation"]))
+    return " - ".join(parts)
+
+
+def _difficulty_to_importance(value: Any) -> int | str:
+    normalized = str(value or "").strip().lower()
+    mapping = {
+        "easy": 1,
+        "facile": 1,
+        "medium": 2,
+        "moyen": 2,
+        "hard": 3,
+        "difficile": 3,
+        "expert": 4,
+    }
+    return mapping.get(normalized, str(value or ""))
+
+
+def _write_xlsx(path: Path, rows: list[list[Any]]) -> None:
+    with ZipFile(path, "w", ZIP_DEFLATED) as archive:
+        archive.writestr("[Content_Types].xml", _content_types_xml())
+        archive.writestr("_rels/.rels", _root_rels_xml())
+        archive.writestr("xl/workbook.xml", _workbook_xml())
+        archive.writestr("xl/_rels/workbook.xml.rels", _workbook_rels_xml())
+        archive.writestr("xl/worksheets/sheet1.xml", _sheet_xml(rows))
+        archive.writestr("docProps/core.xml", _core_props_xml())
+        archive.writestr("docProps/app.xml", _app_props_xml())
+
+
+def _sheet_xml(rows: list[list[Any]]) -> str:
+    row_xml = []
+    for row_index, row in enumerate(rows, start=1):
+        cells = "".join(_xlsx_cell(row_index, column_index, value) for column_index, value in enumerate(row, start=1))
+        row_xml.append(f'<row r="{row_index}">{cells}</row>')
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        '<cols>'
+        '<col min="1" max="5" width="24" customWidth="1"/>'
+        '<col min="6" max="7" width="28" customWidth="1"/>'
+        '<col min="8" max="8" width="60" customWidth="1"/>'
+        '<col min="9" max="13" width="20" customWidth="1"/>'
+        "</cols>"
+        f"<sheetData>{''.join(row_xml)}</sheetData>"
+        "</worksheet>"
+    )
+
+
+def _xlsx_cell(row_index: int, column_index: int, value: Any) -> str:
+    reference = f"{_column_letter(column_index)}{row_index}"
+    if isinstance(value, (int, float)):
+        return f'<c r="{reference}"><v>{value}</v></c>'
+    text = escape(str(value or ""))
+    return f'<c r="{reference}" t="inlineStr"><is><t xml:space="preserve">{text}</t></is></c>'
+
+
+def _column_letter(index: int) -> str:
+    letters = ""
+    while index:
+        index, remainder = divmod(index - 1, 26)
+        letters = chr(65 + remainder) + letters
+    return letters
+
+
+def _content_types_xml() -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'
+        '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>'
+        "</Types>"
+    )
+
+
+def _root_rels_xml() -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>'
+        '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>'
+        "</Relationships>"
+    )
+
+
+def _workbook_xml() -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        '<sheets><sheet name="QCM" sheetId="1" r:id="rId1"/></sheets>'
+        "</workbook>"
+    )
+
+
+def _workbook_rels_xml() -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+        "</Relationships>"
+    )
+
+
+def _core_props_xml() -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '
+        'xmlns:dc="http://purl.org/dc/elements/1.1/">'
+        "<dc:creator>Iktibar</dc:creator>"
+        "<cp:lastModifiedBy>Iktibar</cp:lastModifiedBy>"
+        "</cp:coreProperties>"
+    )
+
+
+def _app_props_xml() -> str:
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" '
+        'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
+        "<Application>Iktibar</Application>"
+        "</Properties>"
+    )
 
 
 class _PDFWriter:
