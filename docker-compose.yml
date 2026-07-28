@@ -223,6 +223,7 @@ services:
       DB_SCHEMA: ${EXPORT_DB_SCHEMA:-export}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-shared-jwt-secret-change-me}
       GENERATION_SERVICE_URL: ${EXPORT_GENERATION_SERVICE_URL:-http://generation-service:8000}
+      DOCUMENT_SERVICE_URL: ${EXPORT_DOCUMENT_SERVICE_URL:-http://document-service:8000}
       STORAGE_ROOT: ${EXPORT_STORAGE_ROOT:-/app/storage}
       EXPORT_DIR_NAME: ${EXPORT_DIR_NAME:-exports}
     ports:
@@ -231,6 +232,8 @@ services:
       postgres:
         condition: service_healthy
       generation-service:
+        condition: service_started
+      document-service:
         condition: service_started
     volumes:
       - ./services/export-service/app:/app/app

@@ -75,11 +75,12 @@ def render_qcm_xlsx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> 
         "Reponse (0,1)",
     ]
     context = _qcm_academic_context(qcm)
+    document_titles = qcm.get("_document_titles_by_id") or {}
     rows: list[list[Any]] = [headers]
-    ouvrage = options.title or qcm.get("title") or ""
 
     for question in sorted(qcm.get("questions", []), key=lambda item: item.get("order_index") or 0):
-        source_reference = _source_reference(question)
+        ouvrage = _question_document_title(question, document_titles)
+        chapter_title = _chapter_title(question)
         importance = _difficulty_to_importance(question.get("difficulty") or qcm.get("difficulty"))
         for answer in sorted(question.get("answers", []), key=lambda item: item.get("order_index") or 0):
             rows.append(
@@ -90,7 +91,7 @@ def render_qcm_xlsx(qcm: dict[str, Any], path: Path, options: ExportOptions) -> 
                     context.get("module", ""),
                     context.get("subject", ""),
                     ouvrage,
-                    source_reference,
+                    chapter_title,
                     question.get("question_text") or "",
                     importance,
                     context.get("period", ""),
@@ -314,13 +315,23 @@ def _qcm_academic_context(qcm: dict[str, Any]) -> dict[str, str]:
     return {str(key): str(value) for key, value in metadata.items() if value is not None}
 
 
-def _source_reference(question: dict[str, Any]) -> str:
-    parts = []
-    if question.get("source_page"):
-        parts.append(f"Page {question['source_page']}")
-    if question.get("citation"):
-        parts.append(str(question["citation"]))
-    return " - ".join(parts)
+def _question_document_title(question: dict[str, Any], document_titles: dict[str, str]) -> str:
+    document_id = question.get("source_document_id")
+    if not document_id:
+        return ""
+    return document_titles.get(str(document_id), str(document_id))
+
+
+def _chapter_title(question: dict[str, Any]) -> str:
+    citation = str(question.get("citation") or "").strip()
+    if not citation:
+        return ""
+    for separator in (" - ", ":", "—", "–"):
+        if separator in citation:
+            first_part = citation.split(separator, 1)[0].strip()
+            if first_part:
+                return first_part[:180]
+    return citation[:180]
 
 
 def _difficulty_to_importance(value: Any) -> int | str:

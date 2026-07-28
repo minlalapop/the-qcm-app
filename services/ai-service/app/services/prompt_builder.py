@@ -20,6 +20,7 @@ Contraintes:
 - distracteurs plausibles, pas absurdes
 - justification obligatoire
 - source obligatoire avec page et chunk_id
+- citation doit contenir le titre de la section ou du chapitre source si identifiable, pas un extrait long
 - eviter les formulations ambigues
 - JSON strict uniquement: double quotes, virgules entre tous les champs, pas de commentaire, pas de Markdown
 - si tu risques de manquer de place, genere moins de texte dans les explications mais garde un JSON complet et valide

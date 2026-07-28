@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
 
     GENERATION_SERVICE_URL: str = "http://generation-service:8000"
+    DOCUMENT_SERVICE_URL: str = "http://document-service:8000"
     STORAGE_ROOT: Path = Path("/app/storage")
     EXPORT_DIR_NAME: str = "exports"
 

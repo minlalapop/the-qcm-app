@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.models.export import Export
 from app.models.export_job import ExportJob
 from app.schemas.export import ExportJobPublic, ExportOptions, ExportPublic, UserContext
+from app.services.document_client import DocumentClient
 from app.services.exporter import create_job, export_mindmap, export_qcm, export_summary
 from app.services.generation_client import GenerationClient
 from app.services.storage import absolute_storage_path
@@ -167,6 +168,8 @@ async def _export_qcm(
     job = create_job(db, current_user, "qcm", qcm_id, export_format)
     try:
         qcm = await GenerationClient(token).get_qcm(qcm_id)
+        if export_format == "xlsx":
+            qcm["_document_titles_by_id"] = await DocumentClient(token).get_document_titles(qcm.get("document_ids") or [])
         return export_qcm(db, current_user, qcm, export_format, options, job)
     except Exception as exc:
         _mark_failed(db, job, exc)
