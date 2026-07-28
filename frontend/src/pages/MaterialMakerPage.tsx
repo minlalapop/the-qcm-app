@@ -28,14 +28,40 @@ import { classNames, formatBytes, formatDate } from "../utils/format";
 
 type MakerMode = "qcm" | "summary" | "mindmap";
 type ModalMode = "configure" | "preview" | "export" | null;
-type AdvancedSettings = {
-  moduleName: string;
-  academicYear: string;
-  filiere: string;
-  semester: string;
-  teacherName: string;
-  learningObjectives: string;
-  extraContext: string;
+type AcademicContextSettings = {
+  establishment: string;
+  formation: string;
+  level: string;
+  period: string;
+  module: string;
+  subject: string;
+};
+type AcademicOption = {
+  id: number;
+  name: string;
+  abbreviation?: string;
+};
+type FormationOption = AcademicOption & { establishmentId: number };
+type LevelOption = AcademicOption & { formationId: number };
+type PeriodOption = AcademicOption & { levelId: number };
+type ModuleOption = AcademicOption & { periodId: number };
+type SubjectOption = AcademicOption & { moduleId: number };
+type AcademicContextData = {
+  establishments: AcademicOption[];
+  formations: FormationOption[];
+  levels: LevelOption[];
+  periods: PeriodOption[];
+  modules: ModuleOption[];
+  subjects: SubjectOption[];
+};
+
+const emptyAcademicOptions: AcademicContextData = {
+  establishments: [],
+  formations: [],
+  levels: [],
+  periods: [],
+  modules: [],
+  subjects: [],
 };
 
 export function MaterialMakerPage() {
@@ -52,6 +78,9 @@ export function MaterialMakerPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [academicOptions, setAcademicOptions] = useState<AcademicContextData>(emptyAcademicOptions);
+  const [isAcademicOptionsLoading, setIsAcademicOptionsLoading] = useState(true);
+  const [academicOptionsError, setAcademicOptionsError] = useState<string | null>(null);
 
   const [title, setTitle] = useState("New material");
   const [focusText, setFocusText] = useState("");
@@ -61,14 +90,13 @@ export function MaterialMakerPage() {
   const [difficulty, setDifficulty] = useState("medium");
   const [topK, setTopK] = useState(6);
   const [maxSections, setMaxSections] = useState(5);
-  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
-    moduleName: "",
-    academicYear: "",
-    filiere: "",
-    semester: "",
-    teacherName: "",
-    learningObjectives: "",
-    extraContext: "",
+  const [academicContext, setAcademicContext] = useState<AcademicContextSettings>({
+    establishment: "",
+    formation: "",
+    level: "",
+    period: "",
+    module: "",
+    subject: "",
   });
   const [resultQcm, setResultQcm] = useState<QCM | null>(null);
   const [resultSummary, setResultSummary] = useState<Summary | null>(null);
@@ -84,6 +112,32 @@ export function MaterialMakerPage() {
   useEffect(() => {
     void refreshData();
   }, [accessToken]);
+
+  useEffect(() => {
+    let active = true;
+    setIsAcademicOptionsLoading(true);
+    fetch("/academic-context.json")
+      .then((response) => {
+        if (!response.ok) throw new Error("Academic options not found");
+        return response.json() as Promise<AcademicContextData>;
+      })
+      .then((payload) => {
+        if (!active) return;
+        setAcademicOptions(payload);
+        setAcademicOptionsError(null);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setAcademicOptionsError(err instanceof Error ? err.message : "Could not load academic options");
+      })
+      .finally(() => {
+        if (active) setIsAcademicOptionsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!accessToken || !previewDocument?.id || modal !== "preview") {
@@ -201,15 +255,45 @@ export function MaterialMakerPage() {
 
   function buildAdvancedMetadata(): Record<string, string> {
     return Object.fromEntries(
-      Object.entries(advancedSettings)
+      Object.entries(academicContext)
         .map(([key, value]) => [key, value.trim()])
         .filter(([, value]) => value.length > 0),
     );
   }
 
+  function getAcademicContextError(): string | null {
+    if (isAcademicOptionsLoading) return "Les options du contexte academique sont encore en chargement.";
+    if (academicOptionsError) return "Impossible de charger les options du contexte academique.";
+    if (academicOptions.establishments.length === 0) return "Les options du contexte academique sont vides.";
+
+    const establishmentOptions = uniqueOptionsByName(academicOptions.establishments);
+    const establishment = findOptionByName(establishmentOptions, academicContext.establishment);
+    if (!establishment) return "Choisis un etablissement dans la liste.";
+
+    const formationOptions = uniqueOptionsByName(academicOptions.formations.filter((formation) => formation.establishmentId === establishment.id));
+    const formation = findOptionByName(formationOptions, academicContext.formation);
+    if (!formation) return "Choisis une formation / filiere dans la liste.";
+
+    const levelOptions = uniqueOptionsByName(academicOptions.levels.filter((level) => level.formationId === formation.id));
+    const level = findOptionByName(levelOptions, academicContext.level);
+    if (!level) return "Choisis un niveau / une annee d'etude dans la liste.";
+
+    const periodOptions = uniqueOptionsByName(academicOptions.periods.filter((period) => period.levelId === level.id));
+    const period = findOptionByName(periodOptions, academicContext.period);
+    if (!period) return "Choisis un semestre / une periode dans la liste.";
+
+    return null;
+  }
+
   async function generate() {
     if (!accessToken || selectedDocumentIds.length === 0) {
       setError("Select at least one PDF source");
+      return;
+    }
+    const academicError = getAcademicContextError();
+    if (academicError) {
+      setError(academicError);
+      setModal("configure");
       return;
     }
     setError(null);
@@ -436,8 +520,11 @@ export function MaterialMakerPage() {
             setMaxSections={setMaxSections}
             focusText={focusText}
             setFocusText={setFocusText}
-            advancedSettings={advancedSettings}
-            setAdvancedSettings={setAdvancedSettings}
+            academicContext={academicContext}
+            setAcademicContext={setAcademicContext}
+            academicOptions={academicOptions}
+            isAcademicOptionsLoading={isAcademicOptionsLoading}
+            academicOptionsError={academicOptionsError}
             documents={documents}
             selectedDocumentIds={selectedDocumentIds}
             onToggle={toggleDocument}
@@ -724,8 +811,11 @@ function ConfigureForm({
   setMaxSections,
   focusText,
   setFocusText,
-  advancedSettings,
-  setAdvancedSettings,
+  academicContext,
+  setAcademicContext,
+  academicOptions,
+  isAcademicOptionsLoading,
+  academicOptionsError,
   documents,
   selectedDocumentIds,
   onToggle,
@@ -749,8 +839,11 @@ function ConfigureForm({
   setMaxSections: (value: number) => void;
   focusText: string;
   setFocusText: (value: string) => void;
-  advancedSettings: AdvancedSettings;
-  setAdvancedSettings: (value: AdvancedSettings) => void;
+  academicContext: AcademicContextSettings;
+  setAcademicContext: (value: AcademicContextSettings) => void;
+  academicOptions: AcademicContextData;
+  isAcademicOptionsLoading: boolean;
+  academicOptionsError: string | null;
   documents: DocumentSummary[];
   selectedDocumentIds: string[];
   onToggle: (document: DocumentSummary, selected: boolean) => void;
@@ -758,8 +851,57 @@ function ConfigureForm({
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  function setAdvancedValue(key: keyof AdvancedSettings, value: string) {
-    setAdvancedSettings({ ...advancedSettings, [key]: value });
+  const establishmentOptions = useMemo(() => uniqueOptionsByName(academicOptions.establishments), []);
+  const selectedEstablishment = findOptionByName(establishmentOptions, academicContext.establishment);
+  const formationOptions = useMemo(
+    () => uniqueOptionsByName(selectedEstablishment ? academicOptions.formations.filter((formation) => formation.establishmentId === selectedEstablishment.id) : []),
+    [selectedEstablishment],
+  );
+  const selectedFormation = findOptionByName(formationOptions, academicContext.formation);
+  const levelOptions = useMemo(
+    () => uniqueOptionsByName(selectedFormation ? academicOptions.levels.filter((level) => level.formationId === selectedFormation.id) : []),
+    [selectedFormation],
+  );
+  const selectedLevel = findOptionByName(levelOptions, academicContext.level);
+  const periodOptions = useMemo(
+    () => uniqueOptionsByName(selectedLevel ? academicOptions.periods.filter((period) => period.levelId === selectedLevel.id) : []),
+    [selectedLevel],
+  );
+  const selectedPeriod = findOptionByName(periodOptions, academicContext.period);
+  const moduleOptions = useMemo(
+    () => uniqueOptionsByName(selectedPeriod ? academicOptions.modules.filter((module) => module.periodId === selectedPeriod.id) : []),
+    [selectedPeriod],
+  );
+  const selectedModule = findOptionByName(moduleOptions, academicContext.module);
+  const subjectOptions = useMemo(
+    () => uniqueOptionsByName(selectedModule ? academicOptions.subjects.filter((subject) => subject.moduleId === selectedModule.id) : []),
+    [selectedModule],
+  );
+
+  function setAcademicValue(key: keyof AcademicContextSettings, value: string) {
+    const next = { ...academicContext, [key]: value };
+    if (key === "establishment") {
+      next.formation = "";
+      next.level = "";
+      next.period = "";
+      next.module = "";
+      next.subject = "";
+    } else if (key === "formation") {
+      next.level = "";
+      next.period = "";
+      next.module = "";
+      next.subject = "";
+    } else if (key === "level") {
+      next.period = "";
+      next.module = "";
+      next.subject = "";
+    } else if (key === "period") {
+      next.module = "";
+      next.subject = "";
+    } else if (key === "module") {
+      next.subject = "";
+    }
+    setAcademicContext(next);
   }
 
   return (
@@ -856,35 +998,66 @@ function ConfigureForm({
             className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left text-sm font-extrabold text-primary transition hover:bg-white/60"
             onClick={() => setShowAdvanced((current) => !current)}
           >
-            <span>Parametres avances</span>
+            <span>Contexte academique</span>
             {showAdvanced ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
 
           {showAdvanced && (
             <div className="mt-3 max-h-72 overflow-auto pr-1">
+              {isAcademicOptionsLoading && <p className="mb-3 rounded-2xl bg-white/70 p-3 text-sm font-bold text-on-surface-variant">Chargement des options academiques...</p>}
+              {academicOptionsError && <p className="mb-3 rounded-2xl bg-error-container p-3 text-sm font-bold text-error">{academicOptionsError}</p>}
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Module">
-                  <input className="form-input" value={advancedSettings.moduleName} onChange={(event) => setAdvancedValue("moduleName", event.target.value)} />
-                </Field>
-                <Field label="Annee universitaire">
-                  <input className="form-input" placeholder="ex: 2026-2027" value={advancedSettings.academicYear} onChange={(event) => setAdvancedValue("academicYear", event.target.value)} />
-                </Field>
-                <Field label="Filiere">
-                  <input className="form-input" value={advancedSettings.filiere} onChange={(event) => setAdvancedValue("filiere", event.target.value)} />
-                </Field>
-                <Field label="Semestre">
-                  <input className="form-input" value={advancedSettings.semester} onChange={(event) => setAdvancedValue("semester", event.target.value)} />
-                </Field>
-                <Field label="Enseignant">
-                  <input className="form-input" value={advancedSettings.teacherName} onChange={(event) => setAdvancedValue("teacherName", event.target.value)} />
-                </Field>
-                <Field label="Objectifs pedagogiques">
-                  <textarea className="form-input min-h-24 py-3" value={advancedSettings.learningObjectives} onChange={(event) => setAdvancedValue("learningObjectives", event.target.value)} />
-                </Field>
-                <label className="block min-w-0 md:col-span-2">
-                  <span className="mb-2 block text-sm font-bold">Contexte additionnel</span>
-                  <textarea className="form-input min-h-24 py-3" value={advancedSettings.extraContext} onChange={(event) => setAdvancedValue("extraContext", event.target.value)} />
-                </label>
+                <AutocompleteField
+                  label="Etablissement"
+                  value={academicContext.establishment}
+                  options={establishmentOptions}
+                  required
+                  placeholder="Commence a taper le nom..."
+                  onChange={(value) => setAcademicValue("establishment", value)}
+                />
+                <AutocompleteField
+                  label="Formation / filiere"
+                  value={academicContext.formation}
+                  options={formationOptions}
+                  required
+                  disabled={!selectedEstablishment}
+                  placeholder={selectedEstablishment ? "Commence a taper la formation..." : "Choisis d'abord un etablissement"}
+                  onChange={(value) => setAcademicValue("formation", value)}
+                />
+                <AutocompleteField
+                  label="Niveau / annee d'etude"
+                  value={academicContext.level}
+                  options={levelOptions}
+                  required
+                  disabled={!selectedFormation}
+                  placeholder={selectedFormation ? "Commence a taper le niveau..." : "Choisis d'abord une formation"}
+                  onChange={(value) => setAcademicValue("level", value)}
+                />
+                <AutocompleteField
+                  label="Semestre / periode"
+                  value={academicContext.period}
+                  options={periodOptions}
+                  required
+                  disabled={!selectedLevel}
+                  placeholder={selectedLevel ? "Commence a taper la periode..." : "Choisis d'abord un niveau"}
+                  onChange={(value) => setAcademicValue("period", value)}
+                />
+                <AutocompleteField
+                  label="Module"
+                  value={academicContext.module}
+                  options={moduleOptions}
+                  disabled={!selectedPeriod}
+                  placeholder={selectedPeriod ? "Optionnel" : "Choisis d'abord une periode"}
+                  onChange={(value) => setAcademicValue("module", value)}
+                />
+                <AutocompleteField
+                  label="Matiere"
+                  value={academicContext.subject}
+                  options={subjectOptions}
+                  disabled={!selectedModule}
+                  placeholder={selectedModule ? "Optionnel" : "Choisis d'abord un module"}
+                  onChange={(value) => setAcademicValue("subject", value)}
+                />
               </div>
             </div>
           )}
@@ -896,6 +1069,106 @@ function ConfigureForm({
       </div>
     </div>
   );
+}
+
+function AutocompleteField({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+  required = false,
+  disabled = false,
+}: {
+  label: string;
+  value: string;
+  options: AcademicOption[];
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const normalizedValue = normalizeAcademicLabel(value);
+  const matchingOptions = useMemo(() => {
+    const available = uniqueOptionsByName(options);
+    if (!normalizedValue) return available.slice(0, 12);
+    const startsWith = available.filter((option) => normalizeAcademicLabel(option.name).startsWith(normalizedValue));
+    const contains = available.filter((option) => {
+      const normalizedName = normalizeAcademicLabel(option.name);
+      return !normalizedName.startsWith(normalizedValue) && normalizedName.includes(normalizedValue);
+    });
+    return [...startsWith, ...contains].slice(0, 12);
+  }, [normalizedValue, options]);
+  const hasExactMatch = !value || Boolean(findOptionByName(options, value));
+
+  return (
+    <label className="relative block min-w-0">
+      <span className="mb-2 block text-sm font-bold">
+        {label}
+        {required && <span className="text-primary"> *</span>}
+      </span>
+      <input
+        className="form-input"
+        value={value}
+        disabled={disabled}
+        placeholder={placeholder}
+        autoComplete="off"
+        onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
+        onChange={(event) => {
+          onChange(event.target.value);
+          setIsOpen(true);
+        }}
+        onFocus={() => setIsOpen(true)}
+      />
+      {isOpen && !disabled && matchingOptions.length > 0 && (
+        <div className="absolute left-0 right-0 z-40 mt-2 max-h-56 overflow-auto rounded-2xl border border-white/70 bg-white/95 p-1 shadow-xl backdrop-blur">
+          {matchingOptions.map((option) => (
+            <button
+              key={`${option.id}-${option.name}`}
+              type="button"
+              className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm font-bold text-on-surface transition hover:bg-primary/10 hover:text-primary"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onChange(option.name);
+                setIsOpen(false);
+              }}
+            >
+              <span className="min-w-0 truncate">{option.name}</span>
+              {option.abbreviation && <span className="shrink-0 text-xs text-on-surface-variant">{option.abbreviation}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+      {required && value && !hasExactMatch && <p className="mt-2 text-xs font-bold text-error">Choisis une valeur proposee dans la liste.</p>}
+    </label>
+  );
+}
+
+function normalizeAcademicLabel(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function findOptionByName<T extends AcademicOption>(options: T[], value: string): T | null {
+  const normalizedValue = normalizeAcademicLabel(value);
+  if (!normalizedValue) return null;
+  return options.find((option) => normalizeAcademicLabel(option.name) === normalizedValue) ?? null;
+}
+
+function uniqueOptionsByName<T extends AcademicOption>(options: T[]): T[] {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const option of options) {
+    const key = normalizeAcademicLabel(option.name);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(option);
+  }
+  return result.sort((first, second) => first.name.localeCompare(second.name, "fr"));
 }
 
 function ExportOptions({
